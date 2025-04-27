@@ -1,0 +1,55 @@
+{
+    "name": "less-epuber",
+    "private": true,
+    "version": "0.0.1",
+    "main": "src/main/main.js",
+    "discription": "Easy convert some files to epub",
+    "author": {
+        "name": "HXL",
+        "email": "pjhxl@qq.com"
+    },
+    "license": "Apache License 2.0",
+    "scripts": {
+        "dev": "cross-env NODE_ENV=dev concurrently vite \"electron .\"",
+        "dist": "cross-env NODE_ENV=prod vite build && electron-builder",
+        "build": "cross-env NODE_ENV=prod vite build",
+        "pack": "cross-env NODE_ENV=prod electron-builder"
+    },
+    "dependencies": {
+        "chardet": "^2.1.0",
+        "electron-store": "^8.0.1",
+        "element-plus": "^2.9.8",
+        "jszip": "^3.10.1",
+        "mitt": "^3.0.0",
+        "vue": "^3.2.25",
+        "vue-router": "^4.0.14",
+        "vue3-ace-editor": "^2.2.3",
+        "vue3-lazyload": "^0.3.6"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^4.2.3",
+        "concurrently": "^7.1.0",
+        "cross-env": "^7.0.3",
+        "electron": "^35.1.4",
+        "electron-builder": "^26.0.12",
+        "vite": "^4.4.0",
+        "wait-on": "^6.0.1"
+    },
+    "build": {
+        "appId": "xyz.hxl.txt2epub",
+        "productName": "Less Epuber",
+        "copyright": "Copyright © HXL2025",
+        "directories": {
+            "output": "output"
+        },
+        "win": {
+            "icon": "dist/favicon.ico"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "perMachine": true,
+            "deleteAppDataOnUninstall": true
+        }
+    }
+}
