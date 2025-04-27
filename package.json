@@ -20,6 +20,7 @@
         "electron-store": "^8.0.1",
         "element-plus": "^2.9.8",
         "jszip": "^3.10.1",
+        "iconv-lite": "^0.6.3",
         "mitt": "^3.0.0",
         "vue": "^3.2.25",
         "vue-router": "^4.0.14",

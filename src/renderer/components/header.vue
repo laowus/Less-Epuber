@@ -66,6 +66,7 @@ const regString = () => {
     chapters.value = getChapters(curChapter.value.content, curChapter.value.title, chapterRegex);
     console.log(chapters.value);
     // chapters.value = chapters;
+    curChapter.value = chapters.value[0];
 };
 
 const deleteEmptyLines = () => {

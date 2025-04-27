@@ -14,13 +14,13 @@ provide('curChapter', curChapter);
 provide('chapters', chapters);
 provide('metadata', metadata);
 
-watch(chapters, () => {
-    console.log('chapters 发生变化:', chapters.value);
-    if (chapters.value.length > 0) {
-        console.log('设置 currentContent 为首个章节内容');
-        curChapter.value = chapters.value[0];
-    }
-}, { immediate: true, deep: true });
+// watch(chapters, () => {
+//     console.log('chapters 发生变化:', chapters.value);
+//     if (chapters.value.length > 0) {
+//         console.log('设置 currentContent 为首个章节内容');
+//         curChapter.value = chapters.value[0];
+//     }
+// }, { immediate: true, deep: true });
 
 // 点击左侧菜单时更新 currentContent
 
