@@ -2,8 +2,12 @@ const getTypes = el => new Set(el?.getAttributeNS?.('http://www.idpf.org/2007/op
 const getRoles = el => new Set(el?.getAttribute?.('role')?.split(' '))
 
 const isSuper = el => {
+    if (el.matches('sup')) return true
     const { verticalAlign } = getComputedStyle(el)
-    return verticalAlign === 'super' || /^\d/.test(verticalAlign)
+    return verticalAlign === 'super'
+        || verticalAlign === 'top'
+        || verticalAlign === 'text-top'
+        || /^\d/.test(verticalAlign)
 }
 
 const refTypes = ['biblioref', 'glossref', 'noteref']
@@ -15,7 +19,7 @@ const isFootnoteReference = a => {
         yes: refRoles.some(r => roles.has(r)) || refTypes.some(t => types.has(t)),
         maybe: () => !types.has('backlink') && !roles.has('doc-backlink')
             && (isSuper(a) || a.children.length === 1 && isSuper(a.children[0])
-                || isSuper(a.parentElement)),
+            || isSuper(a.parentElement)),
     }
 }
 
@@ -24,9 +28,9 @@ const getReferencedType = el => {
     const roles = getRoles(el)
     return roles.has('doc-biblioentry') || types.has('biblioentry') ? 'biblioentry'
         : roles.has('definition') || types.has('glossdef') ? 'definition'
-            : roles.has('doc-endnote') || types.has('endnote') || types.has('rearnote') ? 'endnote'
-                : roles.has('doc-footnote') || types.has('footnote') ? 'footnote'
-                    : roles.has('note') || types.has('note') ? 'note' : null
+        : roles.has('doc-endnote') || types.has('endnote') || types.has('rearnote') ? 'endnote'
+        : roles.has('doc-footnote') || types.has('footnote') ? 'footnote'
+        : roles.has('note') || types.has('note') ? 'note' : null
 }
 
 const isInline = 'a, span, sup, sub, em, strong, i, b, small, big'

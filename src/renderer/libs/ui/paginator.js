@@ -376,7 +376,6 @@ class View {
                 this.#overlayer.element.style[side] = `${expandedSize}px`
                 this.#overlayer.redraw()
             }
-
         } else {
             const side = this.#vertical ? 'width' : 'height'
             const otherSide = this.#vertical ? 'height' : 'width'
@@ -533,9 +532,9 @@ export class Paginator extends HTMLElement {
         }
         </style>
         <div id="top">
-            <div id="background"></div>
+            <div id="background" part="filter"></div>
             <div id="header"></div>
-            <div id="container" part="filter"></div>
+            <div id="container"></div>
             <div id="footer"></div>
         </div>
         `
@@ -545,6 +544,7 @@ export class Paginator extends HTMLElement {
         this.#container = this.#root.getElementById('container')
         this.#header = this.#root.getElementById('header')
         this.#footer = this.#root.getElementById('footer')
+
         this.#observer.observe(this.#container)
         this.#container.addEventListener('scroll', () => this.dispatchEvent(new Event('scroll')))
         this.#container.addEventListener('scroll', debounce(() => {
@@ -563,6 +563,7 @@ export class Paginator extends HTMLElement {
             doc.addEventListener('touchmove', this.#onTouchMove.bind(this), opts)
             doc.addEventListener('touchend', this.#onTouchEnd.bind(this))
         })
+
         this.addEventListener('relocate', ({ detail }) => {
             if (detail.reason === 'selection') setSelectionTo(this.#anchor, 0)
             else if (detail.reason === 'navigation') {
@@ -573,6 +574,7 @@ export class Paginator extends HTMLElement {
             }
         })
         const checkPointerSelection = debounce((range, sel) => {
+            if (!sel.rangeCount) return
             const selRange = sel.getRangeAt(0)
             const backward = selectionIsBackward(sel)
             if (backward && selRange.compareBoundaryPoints(Range.START_TO_START, range) < 0)
@@ -580,7 +582,6 @@ export class Paginator extends HTMLElement {
             else if (!backward && selRange.compareBoundaryPoints(Range.END_TO_END, range) > 0)
                 this.next()
         }, 700)
-
         this.addEventListener('load', ({ detail: { doc } }) => {
             let isPointerSelecting = false
             doc.addEventListener('pointerdown', () => isPointerSelecting = true)
@@ -614,11 +615,6 @@ export class Paginator extends HTMLElement {
         }
         this.#mediaQuery.addEventListener('change', this.#mediaQueryListener)
     }
-    updatePageNumber(fc) {
-        this.#footer.innerHTML = `<span>第 ${this.page} 页 / 总 ${this.pages - 2} 页</span>`
-        this.#footer.style = 'color:' + fc + ';  font-size: 0.75rem; padding-bottom: 1rem; font-weight: bold;'
-
-    }
     attributeChangedCallback(name, _, value) {
         switch (name) {
             case 'flow':
@@ -640,6 +636,22 @@ export class Paginator extends HTMLElement {
     open(book) {
         this.bookDir = book.dir
         this.sections = book.sections
+        book.transformTarget?.addEventListener('data', ({ detail }) => {
+            if (detail.type !== 'text/css') return
+            const w = innerWidth
+            const h = innerHeight
+            detail.data = Promise.resolve(detail.data).then(data => data
+                // unprefix as most of the props are (only) supported unprefixed
+                .replace(/(?<=[{\s;])-epub-/gi, '')
+                // replace vw and vh as they cause problems with layout
+                .replace(/(\d*\.?\d+)vw/gi, (_, d) => parseFloat(d) * w / 100 + 'px')
+                .replace(/(\d*\.?\d+)vh/gi, (_, d) => parseFloat(d) * h / 100 + 'px')
+                // `page-break-*` unsupported in columns; replace with `column-break-*`
+                .replace(/page-break-(after|before|inside)\s*:/gi, (_, x) =>
+                    `-webkit-column-break-${x}:`)
+                .replace(/break-(after|before|inside)\s*:\s*(avoid-)?page/gi, (_, x, y) =>
+                    `break-${x}: ${y ?? ''}column`))
+        })
     }
     #createView() {
         if (this.#view) {
@@ -919,7 +931,6 @@ export class Paginator extends HTMLElement {
         const textPages = pages - 2
         const newPage = Math.round(anchor * (textPages - 1))
         await this.#scrollToPage(newPage + 1, reason)
-
     }
     #getVisibleRange() {
         if (this.scrolled) return getVisibleRange(this.#view.document,
@@ -980,7 +991,7 @@ export class Paginator extends HTMLElement {
     #canGoToIndex(index) {
         return index >= 0 && index <= this.sections.length - 1
     }
-    async #goTo({ index, anchor, select }) {
+    async #goTo({ index, anchor, select}) {
         if (index === this.#index) await this.#display({ index, anchor, select })
         else {
             const oldIndex = this.#index

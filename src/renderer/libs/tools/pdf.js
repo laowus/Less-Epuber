@@ -1,6 +1,6 @@
-const pdfjsPath = path => new URL(`../vendor/pdfjs/${path}`, import.meta.url).toString()
+const pdfjsPath = path => new URL(`vendor/pdfjs/${path}`, import.meta.url).toString()
 
-import '../vendor/pdfjs/pdf.mjs'
+import './vendor/pdfjs/pdf.mjs'
 const pdfjsLib = globalThis.pdfjsLib
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsPath('pdf.worker.mjs')
 
@@ -60,7 +60,7 @@ const render = async (page, doc, zoom) => {
     await new pdfjsLib.AnnotationLayer({ page, viewport, div }).render({
         annotations: await page.getAnnotations(),
         linkService: {
-            goToDestination: () => { },
+            goToDestination: () => {},
             getDestinationHash: dest => JSON.stringify(dest),
             addLinkAttributes: (link, url) => link.href = url,
         },
@@ -105,7 +105,6 @@ const makeTOCItem = item => ({
 })
 
 export const makePDF = async file => {
-    console.log("makePDF", file)
     const transport = new pdfjsLib.PDFDataRangeTransport(file.size, [])
     transport.requestDataRange = (begin, end) => {
         file.slice(begin, end).arrayBuffer().then(chunk => {
@@ -122,7 +121,6 @@ export const makePDF = async file => {
     const book = { rendition: { layout: 'pre-paginated' } }
 
     const { metadata, info } = await pdf.getMetadata() ?? {}
-    console.log("pdfmetadata,", metadata)
     // TODO: for better results, parse `metadata.getRaw()`
     book.metadata = {
         title: metadata?.get('dc:title') ?? info?.Title,
