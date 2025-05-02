@@ -15,7 +15,6 @@ const line = (n) => {
         num += i + suffix.value;
     }
     barValue.value = num;
-    console.log(editArea.value?.scrollTop, barArea.value?.scrollTop);
 };
 
 // 同步滚动条位置方法
@@ -26,7 +25,6 @@ const syncScrollTop = () => {
 };
 // 滚动到顶部的方法
 const scrollRightWrapperToTop = () => {
-    console.log('scrollRightWrapperToTop');
     if (editArea.value) {
         editArea.value.scrollTop = 0;
     }

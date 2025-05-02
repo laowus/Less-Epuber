@@ -1,10 +1,11 @@
 <script setup>
-
 import { ref, onMounted, inject, toRaw } from 'vue';
 import { ElMessage } from 'element-plus';
 import WindowCtr from './windowCtr.vue';
 import { getChapters } from '../utils/funs.js';
-const { ipcRenderer } = window.require('electron');
+import { makeBook } from '../libs/view.js';
+const fs = window.require('fs');
+const { ipcRenderer, webUtils } = window.require('electron');
 const reg = {
     pre: ['', '第', '卷', 'chapter'],
     aft: ['', '章', '回', '节', '集', '部', '篇', '部分'],
@@ -24,7 +25,48 @@ const dialogFormVisible = ref(false)
 const changeTab = (index) => {
     curIndex.value = index
 }
+const parseEpub = async file => {
+    const filePath = webUtils.getPathForFile(file);
+    Object.defineProperty(file, 'path', {
+        value: filePath,
+        writable: false,
+        enumerable: true,
+        configurable: false
+    });
+    await makeBook(file).then(book => {
+        epubToc2Chapters(book);
+    });
+}
+
+
+const epubToc2Chapters = (book) => {
+    const { toc, metadata, loadText, sections } = book;
+    for (const section of sections) {
+        section.load().then((res) => {
+            console.log(res);
+            const txt = loadText(res);
+            console.log(txt);
+        })
+    }
+};
+
+
+
+const initDom = () => {
+    $('#add-epub-file').addEventListener('change', e => {
+        // 检查用户是否选择了文件
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            parseEpub(file);
+        } else {
+            console.log('用户未选择文件');
+        }
+    })
+    $('#add-epub-btn').addEventListener('click', () => $('#add-epub-file').click())
+
+}
 onMounted(() => {
+    initDom();
     ipcRenderer.on('file-content', (event, { filePath, fileContent }) => {
         const path = require('path');
         const ext = path.extname(filePath);
@@ -34,6 +76,8 @@ onMounted(() => {
     });
 });
 
+
+
 const addTxt = () => {
     ipcRenderer.invoke('open-file-dialog', 'txt').then((fileInfos) => {
         //获取返回的文件内容
@@ -42,9 +86,7 @@ const addTxt = () => {
 }
 
 const addEpub = () => {
-    ipcRenderer.invoke('open-file-dialog', 'epub').then((fileInfos) => {
-        console.log(fileInfos);
-    });
+
 }
 const newChapter = () => {
     console.log(`新建章节`);
@@ -98,7 +140,6 @@ const indentFirstLine = () => {
 const updateChapters = () => {
     const targetIndex = curChapter.value.index;
     const foundIndex = chapters.value.findIndex(chap => chap?.index === targetIndex);
-
     if (foundIndex !== -1) {
         // 找到对应的 index，更新该对象
         chapters.value[foundIndex] = { ...curChapter.value };
@@ -182,7 +223,6 @@ const saveMetadata = () => {
                         </span>
                         <img width="220" height="220" v-show="metadata.cover" src="">
                     </div>
-
                 </div>
             </div>
         </div>
@@ -221,7 +261,8 @@ const saveMetadata = () => {
                         <span class="iconfont icon-txt" style="color:#FFB347"></span>
                         <span>导入txt</span>
                     </button>
-                    <button class="btn-icon" @click="addEpub" disabled>
+                    <input type="file" id="add-epub-file" hidden accept=".epub" />
+                    <button class="btn-icon" id="add-epub-btn">
                         <span class="iconfont icon-Epub" style="color:green"></span>
                         <span>导入epub</span>
                     </button>

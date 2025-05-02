@@ -1,7 +1,7 @@
-import * as CFI from './epubcfi.js'
-import { TOCProgress, SectionProgress } from './progress.js'
-import { Overlayer } from './overlayer.js'
-import { textWalker } from './text-walker.js'
+import * as CFI from './tools/epubcfi.js'
+import { TOCProgress, SectionProgress } from './ui/progress.js'
+import { Overlayer } from './ui/overlayer.js'
+import { textWalker } from './tools/text-walker.js'
 
 const SEARCH_PREFIX = 'foliate-search:'
 
@@ -65,9 +65,9 @@ const makeDirectoryLoader = async entry => {
     return { loadText, loadBlob, getSize }
 }
 
-export class ResponseError extends Error {}
-export class NotFoundError extends Error {}
-export class UnsupportedTypeError extends Error {}
+export class ResponseError extends Error { }
+export class NotFoundError extends Error { }
+export class UnsupportedTypeError extends Error { }
 
 const fetchFile = async url => {
     const res = await fetch(url)
@@ -81,40 +81,40 @@ export const makeBook = async file => {
     let book
     if (file.isDirectory) {
         const loader = await makeDirectoryLoader(file)
-        const { EPUB } = await import('./epub.js')
+        const { EPUB } = await import('./tools/epub.js')
         book = await new EPUB(loader).init()
     }
     else if (!file.size) throw new NotFoundError('File not found')
     else if (await isZip(file)) {
         const loader = await makeZipLoader(file)
         if (isCBZ(file)) {
-            const { makeComicBook } = await import('./comic-book.js')
+            const { makeComicBook } = await import('./tools/comic-book.js')
             book = makeComicBook(loader, file)
         }
         else if (isFBZ(file)) {
-            const { makeFB2 } = await import('./fb2.js')
+            const { makeFB2 } = await import('./tools/fb2.js')
             const { entries } = loader
             const entry = entries.find(entry => entry.filename.endsWith('.fb2'))
             const blob = await loader.loadBlob((entry ?? entries[0]).filename)
             book = await makeFB2(blob)
         }
         else {
-            const { EPUB } = await import('./epub.js')
+            const { EPUB } = await import('./tools/epub.js')
             book = await new EPUB(loader).init()
         }
     }
     else if (await isPDF(file)) {
-        const { makePDF } = await import('./pdf.js')
+        const { makePDF } = await import('./tools/pdf.js')
         book = await makePDF(file)
     }
     else {
-        const { isMOBI, MOBI } = await import('./mobi.js')
+        const { isMOBI, MOBI } = await import('./tools/mobi.js')
         if (await isMOBI(file)) {
             const fflate = await import('./vendor/fflate.js')
             book = await new MOBI({ unzlib: fflate.unzlibSync }).open(file)
         }
         else if (isFB2(file)) {
-            const { makeFB2 } = await import('./fb2.js')
+            const { makeFB2 } = await import('./tools/fb2.js')
             book = await makeFB2(file)
         }
     }
@@ -230,8 +230,8 @@ export class View extends HTMLElement {
     }
     async open(book) {
         if (typeof book === 'string'
-        || typeof book.arrayBuffer === 'function'
-        || book.isDirectory) book = await makeBook(book)
+            || typeof book.arrayBuffer === 'function'
+            || book.isDirectory) book = await makeBook(book)
         this.book = book
         this.language = languageInfo(book.metadata?.language)
 
@@ -242,18 +242,20 @@ export class View extends HTMLElement {
             const getFragment = book.getTOCFragment.bind(book)
             this.#tocProgress = new TOCProgress()
             await this.#tocProgress.init({
-                toc: book.toc ?? [], ids, splitHref, getFragment })
+                toc: book.toc ?? [], ids, splitHref, getFragment
+            })
             this.#pageProgress = new TOCProgress()
             await this.#pageProgress.init({
-                toc: book.pageList ?? [], ids, splitHref, getFragment })
+                toc: book.pageList ?? [], ids, splitHref, getFragment
+            })
         }
 
         this.isFixedLayout = this.book.rendition?.layout === 'pre-paginated'
         if (this.isFixedLayout) {
-            await import('./fixed-layout.js')
+            await import('./ui/fixed-layout.js')
             this.renderer = document.createElement('foliate-fxl')
         } else {
-            await import('./paginator.js')
+            await import('./ui/paginator.js')
             this.renderer = document.createElement('foliate-paginator')
         }
         this.renderer.setAttribute('exportparts', 'head,foot,filter')
@@ -421,7 +423,7 @@ export class View extends HTMLElement {
         const resolved = await this.goTo(value)
         if (resolved) {
             const { index, anchor } = resolved
-            const { doc } =  this.#getOverlayer(index)
+            const { doc } = this.#getOverlayer(index)
             const range = anchor(doc)
             this.#emit('show-annotation', { value, index, range })
         }
@@ -461,7 +463,7 @@ export class View extends HTMLElement {
             await this.renderer.goTo(resolved)
             this.history.pushState(target)
             return resolved
-        } catch(e) {
+        } catch (e) {
             console.error(e)
             console.error(`Could not go to ${target}`)
         }
@@ -476,7 +478,7 @@ export class View extends HTMLElement {
             const obj = await this.resolveNavigation(target)
             await this.renderer.goTo({ ...obj, select: true })
             this.history.pushState(target)
-        } catch(e) {
+        } catch (e) {
             console.error(e)
             console.error(`Could not go to ${target}`)
         }
@@ -503,7 +505,7 @@ export class View extends HTMLElement {
             const range = isRange ? frag : doc.createRange()
             if (!isRange) range.selectNodeContents(frag)
             return this.#tocProgress.getProgress(index, range)
-        } catch(e) {
+        } catch (e) {
             console.error(e)
             console.error(`Could not get ${target}`)
         }
@@ -539,7 +541,7 @@ export class View extends HTMLElement {
     }
     async * search(opts) {
         this.clearSearch()
-        const { searchMatcher } = await import('./search.js')
+        const { searchMatcher } = await import('./tools/search.js')
         const { query, index } = opts
         const matcher = searchMatcher(textWalker,
             { defaultLocale: this.language, ...opts })
@@ -551,7 +553,7 @@ export class View extends HTMLElement {
         this.#searchResults.set(index, list)
 
         for await (const result of iter) {
-            if (result.subitems){
+            if (result.subitems) {
                 const list = result.subitems
                     .map(({ cfi }) => ({ value: SEARCH_PREFIX + cfi }))
                 this.#searchResults.set(result.index, list)
@@ -580,7 +582,7 @@ export class View extends HTMLElement {
     async initTTS(granularity = 'word') {
         const doc = this.renderer.getContents()[0].doc
         if (this.tts && this.tts.doc === doc) return
-        const { TTS } = await import('./tts.js')
+        const { TTS } = await import('./tools/tts.js')
         this.tts = new TTS(doc, textWalker, range =>
             this.renderer.scrollToAnchor(range, true), granularity)
     }

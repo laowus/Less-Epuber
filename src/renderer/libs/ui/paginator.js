@@ -634,6 +634,7 @@ export class Paginator extends HTMLElement {
         }
     }
     open(book) {
+        console.log('paginator - open', book)
         this.bookDir = book.dir
         this.sections = book.sections
         book.transformTarget?.addEventListener('data', ({ detail }) => {
@@ -963,6 +964,7 @@ export class Paginator extends HTMLElement {
         this.#index = index
         const hasFocus = this.#view?.document?.hasFocus()
         if (src) {
+            //创建view 
             const view = this.#createView()
             const afterLoad = doc => {
                 if (doc.head) {
@@ -991,17 +993,21 @@ export class Paginator extends HTMLElement {
     #canGoToIndex(index) {
         return index >= 0 && index <= this.sections.length - 1
     }
-    async #goTo({ index, anchor, select}) {
+    async #goTo({ index, anchor, select }) {
         if (index === this.#index) await this.#display({ index, anchor, select })
         else {
-            const oldIndex = this.#index
+            const oldIndex = this.#index//开始-1 给0 != -1
+            //加载
             const onLoad = detail => {
                 this.sections[oldIndex]?.unload?.()
                 this.setStyles(this.#styles)
                 this.dispatchEvent(new CustomEvent('load', { detail }))
             }
+            //
             await this.#display(Promise.resolve(this.sections[index].load())
-                .then(src => ({ index, src, anchor, onLoad, select }))
+                .then(src => {
+                    return ({ index, src, anchor, onLoad, select })
+                })
                 .catch(e => {
                     console.warn(e)
                     console.warn(new Error(`Failed to load section ${index}`))
@@ -1050,12 +1056,14 @@ export class Paginator extends HTMLElement {
     async #turnPage(dir, distance) {
         if (this.#locked) return
         this.#locked = true
-        const prev = dir === -1
+        const prev = dir === -1 //flase
         const shouldGo = await (prev ? this.#scrollPrev(distance) : this.#scrollNext(distance))
-        if (shouldGo) await this.#goTo({
-            index: this.#adjacentIndex(dir),
-            anchor: prev ? () => 1 : () => 0,
-        })
+        if (shouldGo) {
+            await this.#goTo({
+                index: this.#adjacentIndex(dir),
+                anchor: prev ? () => 1 : () => 0,
+            })
+        }
         if (shouldGo || !this.hasAttribute('animated')) await wait(100)
         this.#locked = false
     }
