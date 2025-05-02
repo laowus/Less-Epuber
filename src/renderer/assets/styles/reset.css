@@ -99,7 +99,6 @@ option:hover {
 }
 
 * {
-    box-sizing: border-box;
     border: 0 solid #e5e7eb;
 }
 /* 设置滚动条宽度 */

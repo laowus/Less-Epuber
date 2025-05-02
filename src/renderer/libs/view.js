@@ -458,8 +458,10 @@ export class View extends HTMLElement {
         }
     }
     async goTo(target) {
+        console.log("view - goTo", target)
         const resolved = this.resolveNavigation(target)
         try {
+            console.log("resolved", resolved)
             await this.renderer.goTo(resolved)
             this.history.pushState(target)
             return resolved

@@ -3,7 +3,7 @@ import { ref, onMounted, inject, toRaw } from 'vue';
 import { ElMessage } from 'element-plus';
 import WindowCtr from './windowCtr.vue';
 import { getChapters } from '../utils/funs.js';
-import { makeBook } from '../libs/view.js';
+import { open } from '../libs/reader.js';
 const fs = window.require('fs');
 const { ipcRenderer, webUtils } = window.require('electron');
 const reg = {
@@ -33,9 +33,7 @@ const parseEpub = async file => {
         enumerable: true,
         configurable: false
     });
-    await makeBook(file).then(book => {
-        epubToc2Chapters(book);
-    });
+    await open(file);
 }
 
 
