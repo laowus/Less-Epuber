@@ -3,7 +3,7 @@ import { ref, onMounted, inject, toRaw } from 'vue';
 import { ElMessage } from 'element-plus';
 import WindowCtr from './windowCtr.vue';
 import { getChapters } from '../utils/funs.js';
-import { open } from '../libs/reader.js';
+import { open } from '../libs/parseBook.js';
 const fs = window.require('fs');
 const { ipcRenderer, webUtils } = window.require('electron');
 const reg = {

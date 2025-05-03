@@ -3,6 +3,7 @@ const { isDevEnv } = require('./env');
 const path = require('path');
 const { detectEncoding, readTxtFile } = require('./txtParse');
 const { createEpub } = require('./createEpub');
+const { initDatabase } = require('./dbtool')
 const fs = require('fs');
 const Store = require("electron-store");
 const store = new Store();
@@ -43,7 +44,8 @@ const startup = () => {
 }
 
 const init = () => {
-    app.whenReady().then(() => {
+    app.whenReady().then(async () => {
+        await initDatabase();
         mainWin = createWindow();
         initWindowBounds(mainWin);
     })

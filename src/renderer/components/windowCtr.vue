@@ -26,7 +26,7 @@ const handleMix = () => {
     align-items: center;
     justify-content: center;
     gap: 20px;
-    padding-right: 10px;
+    padding-right: 20px;
 
 }
 </style>

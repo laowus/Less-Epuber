@@ -33,6 +33,13 @@ const handleChapterClick = (chapter) => {
                     @click="handleChapterClick(chapter)">
                     {{ chapter.title }}
                 </div>
+                <div id="side-bar-header">
+                    <img id="side-bar-cover">
+                    <div>
+                        <h1 id="side-bar-title"></h1>
+                        <p id="side-bar-author"></p>
+                    </div>
+                </div>
                 <div id="toc-view"></div>
             </div>
             <TxtEditor ref="txtEditorRef" />
@@ -55,7 +62,39 @@ body {
     font-family: system-ui, sans-serif;
 }
 
+#side-bar-header {
+    padding: 1rem;
+    display: flex;
+    border-bottom: 1px solid rgba(0, 0, 0, .1);
+    align-items: center;
+    padding: 5px;
+}
 
+#side-bar-cover {
+    height: 10vh;
+    min-height: 60px;
+    max-height: 180px;
+    border-radius: 3px;
+    border: 0;
+    background: lightgray;
+    box-shadow: 0 0 1px rgba(0, 0, 0, .1), 0 0 16px rgba(0, 0, 0, .1);
+    margin-inline-end: 1rem;
+}
+
+#side-bar-cover:not([src]) {
+    display: none;
+}
+
+#side-bar-title {
+    margin: .5rem 0;
+    font-size: inherit;
+}
+
+#side-bar-author {
+    margin: .5rem 0;
+    font-size: small;
+    color: GrayText;
+}
 
 #toc-view {
     padding: .5rem;
@@ -135,7 +174,7 @@ body {
 }
 
 #leftMenu {
-    width: 320px;
+    width: 200px;
     height: 100%;
     background-color: #f0f0f0;
     border-right: 1px solid #add8e6;
@@ -145,7 +184,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 5px;
 }
 
 #leftMenu div {
@@ -153,11 +191,6 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     text-overflow: ellipsis;
-}
-
-#leftMenu div:hover {
-    background-color: #e0e0e0;
-    transform: translateX(2px);
 }
 
 .container {

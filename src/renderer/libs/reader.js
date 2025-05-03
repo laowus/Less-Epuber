@@ -70,41 +70,12 @@ class Reader {
     }
     annotations = new Map()
     annotationsByValue = new Map()
-    // closeSideBar() {
-    //     $('#dimming-overlay').classList.remove('show')
-    //     $('#side-bar').classList.remove('show')
-    // }
     constructor() {
-        // $('#side-bar-button').addEventListener('click', () => {
-        //     $('#dimming-overlay').classList.add('show')
-        //     $('#side-bar').classList.add('show')
-        // })
-        // $('#dimming-overlay').addEventListener('click', () => this.closeSideBar())
 
-        // const menu = createMenu([
-        //     {
-        //         name: 'layout',
-        //         label: 'Layout',
-        //         type: 'radio',
-        //         items: [
-        //             ['Paginated', 'paginated'],
-        //             ['Scrolled', 'scrolled'],
-        //         ],
-        //         onclick: value => {
-        //             this.view?.renderer.setAttribute('flow', value)
-        //         },
-        //     },
-        // ])
-        // menu.element.classList.add('menu')
-
-        // $('#menu-button').append(menu.element)
-        // $('#menu-button > button').addEventListener('click', () =>
-        //     menu.element.classList.toggle('show'))
-        // menu.groups.layout.select('paginated')
     }
     async open(file) {
         this.view = document.createElement('foliate-view')
-        document.body.append(this.view)
+        // document.body.append(this.view)
         await this.view.open(file)
         this.view.addEventListener('load', this.#onLoad.bind(this))
         this.view.addEventListener('relocate', this.#onRelocate.bind(this))
@@ -119,38 +90,19 @@ class Reader {
         this.view.renderer.setStyles?.(getCSS(this.style))
         this.view.renderer.next()
 
-        // $('#header-bar').style.visibility = 'visible'
-        // $('#nav-bar').style.visibility = 'visible'
-        // $('#left-button').addEventListener('click', () => this.view.goLeft())
-        // $('#right-button').addEventListener('click', () => this.view.goRight())
-
-        // const slider = $('#progress-slider')
-        // slider.dir = book.dir
-        // slider.addEventListener('input', e =>
-        //     this.view.goToFraction(parseFloat(e.target.value)))
-        // for (const fraction of this.view.getSectionFractions()) {
-        //     const option = document.createElement('option')
-        //     option.value = fraction
-        //     $('#tick-marks').append(option)
-        // }
-
         document.addEventListener('keydown', this.#handleKeydown.bind(this))
 
         const title = formatLanguageMap(book.metadata?.title) || 'Untitled Book'
         document.title = title
-        // $('#side-bar-title').innerText = title
-        // $('#side-bar-author').innerText = formatContributor(book.metadata?.author)
-        // Promise.resolve(book.getCover?.())?.then(blob =>
-        //     blob ? $('#side-bar-cover').src = URL.createObjectURL(blob) : null)
 
         const toc = book.toc
         if (toc) {
             this.#tocView = createTOCView(toc, href => {
                 console.log("href", href)
-                this.view.goTo(href).catch(e => console.error(e))
-                // this.closeSideBar()
             })
-            $('#toc-view').append(this.#tocView.element)
+            const tocViewElement = $('#toc-view');
+            tocViewElement.innerHTML = '';
+            tocViewElement.append(this.#tocView.element);
         }
 
     }
@@ -168,10 +120,6 @@ class Reader {
         const loc = pageItem
             ? `Page ${pageItem.label}`
             : `Loc ${location.current}`
-        //const slider = $('#progress-slider')
-        // slider.style.visibility = 'visible'
-        //slider.value = fraction
-        //slider.title = `${percent} · ${loc}`
         if (tocItem?.href) this.#tocView?.setCurrentHref?.(tocItem.href)
     }
 }
@@ -183,25 +131,3 @@ export const open = async file => {
     await reader.open(file)
 }
 
-// const dragOverHandler = e => e.preventDefault()
-// const dropHandler = e => {
-//     e.preventDefault()
-//     const item = Array.from(e.dataTransfer.items)
-//         .find(item => item.kind === 'file')
-//     if (item) {
-//         const entry = item.webkitGetAsEntry()
-//         open(entry.isFile ? item.getAsFile() : entry).catch(e => console.error(e))
-//     }
-// }
-// const dropTarget = $('#drop-target')
-// dropTarget.addEventListener('drop', dropHandler)
-// dropTarget.addEventListener('dragover', dragOverHandler)
-
-// $('#file-input').addEventListener('change', e =>
-//     open(e.target.files[0]).catch(e => console.error(e)))
-// $('#file-button').addEventListener('click', () => $('#file-input').click())
-
-// const params = new URLSearchParams(location.search)
-// const url = params.get('url')
-// if (url) open(url).catch(e => console.error(e))
-// else dropTarget.style.visibility = 'visible'
