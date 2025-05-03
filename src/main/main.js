@@ -7,6 +7,7 @@ const { initDatabase } = require('./dbtool')
 const fs = require('fs');
 const Store = require("electron-store");
 const store = new Store();
+const htmlPath = path.join(app.getPath('userData'), 'bookdata', 'htmls');
 let resourcesRoot = path.resolve(app.getAppPath());
 let publicRoot = path.join(__dirname, '../../public');
 
@@ -290,6 +291,20 @@ ipcMain.handle('export-epub', async (event, { chapters, metadata }) => {
         console.error('导出 EPUB 失败:', error);
         return { success: false, message: error.message };
     }
+});
+
+// 监听渲染进程发送的 save-html 事件
+ipcMain.on('save-html', (event, { timestamp, fileName, content }) => {
+    const saveDir = path.join(htmlPath, String(timestamp));
+    const savePath = path.join(saveDir, fileName);
+    fs.mkdirSync(path.dirname(savePath), { recursive: true });
+    fs.writeFile(savePath, content, 'utf8', (err) => {
+        if (err) {
+            console.error('保存文件时出错:', err);
+        } else {
+            console.log(`文件 ${fileName} 保存成功`);
+        }
+    });
 });
 
 //启动应用

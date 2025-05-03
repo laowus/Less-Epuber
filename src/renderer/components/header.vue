@@ -37,19 +37,6 @@ const parseEpub = async file => {
 }
 
 
-const epubToc2Chapters = (book) => {
-    const { toc, metadata, loadText, sections } = book;
-    for (const section of sections) {
-        section.load().then((res) => {
-            console.log(res);
-            const txt = loadText(res);
-            console.log(txt);
-        })
-    }
-};
-
-
-
 const initDom = () => {
     $('#add-epub-file').addEventListener('change', e => {
         // 检查用户是否选择了文件
@@ -259,7 +246,7 @@ const saveMetadata = () => {
                         <span class="iconfont icon-txt" style="color:#FFB347"></span>
                         <span>导入txt</span>
                     </button>
-                    <input type="file" id="add-epub-file" hidden accept=".epub" />
+                    <input type="file" id="add-epub-file" hidden accept=".epub,.mobi,.azw3" />
                     <button class="btn-icon" id="add-epub-btn">
                         <span class="iconfont icon-Epub" style="color:green"></span>
                         <span>导入epub</span>
