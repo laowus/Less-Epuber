@@ -293,8 +293,8 @@ ipcMain.handle('export-epub', async (event, { chapters, metadata }) => {
     }
 });
 
-// 监听渲染进程发送的 save-html 事件
-ipcMain.on('save-html', (event, { timestamp, fileName, content }) => {
+// 监听渲染进程发送的 save-str 事件
+ipcMain.on('save-str', (event, { timestamp, fileName, content }) => {
     const saveDir = path.join(htmlPath, String(timestamp));
     const savePath = path.join(saveDir, fileName);
     fs.mkdirSync(path.dirname(savePath), { recursive: true });

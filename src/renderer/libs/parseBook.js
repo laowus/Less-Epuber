@@ -36,17 +36,22 @@ const getHtml = async (book, ext) => {
         // 获取当前时间戳
         const timestamp = Date.now();
         for (const section of book.sections) {
-            await section.createDocument().then(async (document) => {
-                // 将 document 对象转换为 HTML 字符串
-                const htmlContent = document.documentElement.outerHTML;
-                // 判断 section.id 是否有后缀，若没有则添加 .html
-                const fileName = ext == 'epub' ? section.id : `${section.id}.html`;
-                ipcRenderer.send('save-html', {
-                    timestamp,
-                    fileName: fileName,
-                    content: htmlContent
-                });
+            await section.loadText().then(async (document) => {
+                console.log(document)
             });
+
+            // await section.createDocument().then(async (document) => {
+
+            //     // // 将 document 对象转换为 HTML 字符串
+            //     // const htmlContent = document.documentElement.outerHTML;
+            //     // // 判断 section.id 是否有后缀，若没有则添加 .html
+            //     // const fileName = ext == 'epub' ? section.id : `${section.id}.html`;
+            //     // ipcRenderer.send('save-html', {
+            //     //     timestamp,
+            //     //     fileName: fileName,
+            //     //     content: htmlContent
+            //     // });
+            // });
         }
     } catch (err) {
         console.error('处理文件时出错:', err);
