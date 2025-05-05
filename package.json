@@ -24,7 +24,6 @@
         "mitt": "^3.0.0",
         "vue": "^3.2.25",
         "vue-router": "^4.0.14",
-        "vue3-ace-editor": "^2.2.3",
         "vue3-lazyload": "^0.3.6",
         "sqlite3": "^5.1.7"
     },
