@@ -86,15 +86,13 @@ const createWindow = () => {
         });
         if (isDevEnv) {
             mainWindow.loadURL("http://localhost:2000/")
-            // Open the DevTools.
             mainWindow.webContents.openDevTools()
         } else {
-            // Load the index.html of the app.
             mainWindow.loadFile('dist/index.html')
         }
 
         tray = new Tray(path.join(publicRoot, '/images/logo.png'));
-        tray.setToolTip('Txt2Epub');
+        tray.setToolTip('Less-Epuber');
         let contextMenu = generateContextMenu();
         tray.setContextMenu(contextMenu);
         tray.on('double-click', () => {

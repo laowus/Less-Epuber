@@ -89,6 +89,7 @@ const createTable = () => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             bookId INTEGER,
             title TEXT,
+            href TEXT,
             content TEXT,
             createTime TEXT,
             updateTime TEXT
@@ -101,8 +102,24 @@ const createTable = () => {
     });
 }
 
+
+const insertBook = (book, event) => {
+    db.run(`
+    INSERT INTO ee_book (name, author, description, cover, path, createTime, updateTime)
+     VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        [book.name, book.author, book.description, book.cover, book.path], function (err) {
+            if (err) {
+                console.error(err.message);
+                event.reply('db-insert-book-response', { success: false });
+            } else {
+                event.reply('db-insert-book-response', { success: true, id: this.lastID });
+            }
+        });
+}
+
 //导出
 module.exports = {
     initDatabase,
+    insertBook
 }
 
