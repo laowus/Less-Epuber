@@ -28,13 +28,16 @@ const formatContributor = (contributor) =>
     ? listFormat.format(contributor.map(formatOneContributor))
     : formatOneContributor(contributor);
 
+/**
+ * 保存封面到本地
+ * @param {*} coverData string base64 格式
+ * @param {*} coverPath string 保存路径
+ * @returns void
+ */
 const saveCoverToLocal = (coverData, coverPath) => {
   return new Promise((resolve, reject) => {
-    // 提取 Base64 数据部分
     const base64Data = coverData.split(",")[1];
-    // 解码 Base64 数据
     const fileBuffer = Buffer.from(base64Data, "base64");
-    // 写入文件
     fs.writeFile(coverPath, fileBuffer, (err) => {
       if (err) {
         reject(err);
@@ -65,12 +68,14 @@ export const open = async (file) => {
     cover: coverPath,
     path: webUtils.getPathForFile(file),
   });
+  ipcRenderer.once("db-insert-book-response", (event, res) => {
+    createLeftMenu(book);
+    getHtml(book, ext);
+  });
   // createLeftMenu(book);
   // getHtml(book, ext);
   // console.log("book", book);
-  ipcRenderer.once("db-insert-book-response", (event, res) => {
-    console.log("db-insert-book-response", res);
-  });
+  
 };
 
 // 定义一个函数来提取 HTML 字符串中的纯文本

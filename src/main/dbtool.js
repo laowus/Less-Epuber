@@ -117,6 +117,20 @@ const insertBook = (book, event) => {
         });
 }
 
+const insertChapter = (chapter, event)=>{
+    db.run(`
+    INSERT INTO ee_chapter (bookId, title, href, content, createTime, updateTime)
+     VALUES (? , ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        [chapter.bookId, chapter.title, chapter.href, chapter.content], function (err) {
+            if (err) {
+                console.error(err.message);
+                event.reply('db-insert-chapter-response', { success: false }); // 发送失败响应
+            } else {
+                event.reply('db-insert-chapter-response', { success: true, id: this.lastID }); // 发送成功响应
+            }
+        });
+}
+
 //导出
 module.exports = {
     initDatabase,
