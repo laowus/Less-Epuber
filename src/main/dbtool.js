@@ -70,7 +70,7 @@ const createTable = () => {
     db.run(`
         CREATE TABLE ee_book (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
+            title TEXT,
             author TEXT,
             description TEXT,
             cover TEXT,
@@ -105,9 +105,9 @@ const createTable = () => {
 
 const insertBook = (book, event) => {
     db.run(`
-    INSERT INTO ee_book (name, author, description, cover, path, createTime, updateTime)
-     VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-        [book.name, book.author, book.description, book.cover, book.path], function (err) {
+    INSERT INTO ee_book (title, author, description, cover, path, createTime, updateTime)
+     VALUES (? , ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        [book.title, book.author, book.description, book.cover, book.path], function (err) {
             if (err) {
                 console.error(err.message);
                 event.reply('db-insert-book-response', { success: false });

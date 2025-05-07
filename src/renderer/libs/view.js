@@ -76,6 +76,17 @@ const fetchFile = async url => {
     return new File([await res.blob()], new URL(res.url).pathname)
 }
 
+const img2str = (img) => {
+    return new Promise(function (resolve, reject) {
+        const fileReader = new FileReader()
+        fileReader.readAsDataURL(img)
+        fileReader.onload = () => {
+            const str = fileReader.result
+            resolve(str)
+        }
+    })
+}
+
 export const makeBook = async file => {
     if (typeof file === 'string') file = await fetchFile(file)
     let book
@@ -117,6 +128,11 @@ export const makeBook = async file => {
             const { makeFB2 } = await import('./tools/fb2.js')
             book = await makeFB2(file)
         }
+    }
+    const blobCover = await book.getCover()
+    if (blobCover) {
+        const strCover = await img2str(blobCover)
+        book.metadata.cover = strCover
     }
     if (!book) throw new UnsupportedTypeError('File type not supported')
     return book

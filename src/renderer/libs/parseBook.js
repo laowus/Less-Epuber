@@ -1,6 +1,8 @@
 import { createTOCView } from "./ui/tree.js";
 import { makeBook } from "./view.js";
-const { ipcRenderer } = window.require("electron");
+const path = window.require("path");
+const fs = window.require('fs');
+const { ipcRenderer, webUtils } = window.require("electron");
 const $ = document.querySelector.bind(document);
 
 const locales = "en";
@@ -26,29 +28,63 @@ const formatContributor = (contributor) =>
     ? listFormat.format(contributor.map(formatOneContributor))
     : formatOneContributor(contributor);
 
-export const open = async (file) => {
-  console.log("file", file);
-  // 获取文件扩展名
-  const ext = file.name.match(/\.([^.]+)$/)?.[1] || "";
-  const book = await makeBook(file);
-  createLeftMenu(book);
-  getHtml(book, ext);
-  console.log("book", book);
+const saveCoverToLocal = (coverData, coverPath) => {
+  return new Promise((resolve, reject) => {
+    // 提取 Base64 数据部分
+    const base64Data = coverData.split(",")[1];
+    // 解码 Base64 数据
+    const fileBuffer = Buffer.from(base64Data, "base64");
+    // 写入文件
+    fs.writeFile(coverPath, fileBuffer, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(coverPath);
+      }
+    });
+  });
 };
 
+export const open = async (file) => {
+  console.log("file", file);
+  const timestamp = Date.now();
+  const ext = file.name.match(/\.([^.]+)$/)?.[1] || "";
+  const book = await makeBook(file);
+  console.log("book", book);
+  const coverDir = ipcRenderer.sendSync("get-cover-dir", "ping");
+  let coverPath = "";
+  if (book.metadata.cover) {
+    coverPath  = path.join(coverDir, timestamp + ".jpg");
+    await saveCoverToLocal(book.metadata.cover, coverPath);
+  }
+  //把文件信息添加到数据库中
+  ipcRenderer.send("db-insert-book", {
+    title: book.metadata.title,
+    author: book.metadata.author,
+    description: book.metadata.description,
+    cover: coverPath,
+    path: webUtils.getPathForFile(file),
+  });
+  // createLeftMenu(book);
+  // getHtml(book, ext);
+  // console.log("book", book);
+  ipcRenderer.once("db-insert-book-response", (event, res) => {
+    console.log("db-insert-book-response", res);
+  });
+};
 
 // 定义一个函数来提取 HTML 字符串中的纯文本
 function getTextFromHTML(htmlString) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlString, 'text/html');
-    return doc.body.textContent || '';
-  }
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  return doc.body.textContent || "";
+}
 
 const getHtml = async (book, ext) => {
   book.sections;
 
   try {
-    // toc 中 href 与 section.id 匹配，获取 section 的 html 添加 
+    // toc 中 href 与 section.id 匹配，获取 section 的 html 添加
     const sectionInfoArray = await Promise.all(
       book.sections.map(async (section) => {
         const doc = await section.createDocument();
@@ -68,10 +104,10 @@ const getHtml = async (book, ext) => {
       if (sectionInfoMap[tocItem.href]) {
         newTocItem.html = sectionInfoMap[tocItem.href];
         newToc.push(newTocItem); // 添加 html 属性
-      } 
+      }
       if (tocItem.subitems) {
         for (const subitem of tocItem.subitems) {
-          let newTocItem = {...subitem }; // 复制 subitem 的属性
+          let newTocItem = { ...subitem }; // 复制 subitem 的属性
           if (sectionInfoMap[subitem.href]) {
             newTocItem.html = sectionInfoMap[subitem.href];
             newToc.push(newTocItem); // 添加 html 属性
@@ -79,12 +115,9 @@ const getHtml = async (book, ext) => {
         }
       }
     }
-    console.log('循环结束，newToc 数组内容：', newToc);
+    console.log("循环结束，newToc 数组内容：", newToc);
     // 你可以在这里调用其他函数，将 newToc 作为参数传递
     // processNewToc(newToc);
-    
-
-    
 
     // // 先处理 epub
     // const timestamp = Date.now();

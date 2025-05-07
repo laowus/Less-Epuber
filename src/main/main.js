@@ -10,6 +10,8 @@ const store = new Store();
 const htmlPath = path.join(app.getPath('userData'), 'bookdata', 'htmls');
 let resourcesRoot = path.resolve(app.getAppPath());
 let publicRoot = path.join(__dirname, '../../public');
+const dbHandle = require('./ipcHandlers/dbHandle');
+const fileHandle = require('./ipcHandlers/fileHandle');
 
 if (!isDevEnv) {
     resourcesRoot = path.dirname(resourcesRoot);
@@ -39,6 +41,9 @@ if (!singleInstance) {
         }
     });
 }
+
+dbHandle();
+fileHandle();
 /* 自定义函数 */
 const startup = () => {
     init()
