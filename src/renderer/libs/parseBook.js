@@ -1,7 +1,7 @@
 import { createTOCView } from "./ui/tree.js";
 import { makeBook } from "./view.js";
 const path = window.require("path");
-const fs = window.require('fs');
+const fs = window.require("fs");
 const { ipcRenderer, webUtils } = window.require("electron");
 const $ = document.querySelector.bind(document);
 
@@ -49,105 +49,93 @@ const saveCoverToLocal = (coverData, coverPath) => {
 };
 
 export const open = async (file) => {
-  console.log("file", file);
-  const timestamp = Date.now();
-  const ext = file.name.match(/\.([^.]+)$/)?.[1] || "";
-  const book = await makeBook(file);
-  console.log("book", book);
-  const coverDir = ipcRenderer.sendSync("get-cover-dir", "ping");
-  let coverPath = "";
-  if (book.metadata.cover) {
-    coverPath  = path.join(coverDir, timestamp + ".jpg");
-    await saveCoverToLocal(book.metadata.cover, coverPath);
-  }
-  //把文件信息添加到数据库中
-  ipcRenderer.send("db-insert-book", {
-    title: book.metadata.title,
-    author: book.metadata.author,
-    description: book.metadata.description,
-    cover: coverPath,
-    path: webUtils.getPathForFile(file),
+  return new Promise(async (resolve, reject) => {
+    console.log("file", file);
+    const timestamp = Date.now();
+    const ext = file.name.match(/\.([^.]+)$/)?.[1] || "";
+    const book = await makeBook(file);
+    let bookId = 0;
+    console.log("book", book);
+    const coverDir = ipcRenderer.sendSync("get-cover-dir", "ping");
+    let coverPath = "";
+    if (book.metadata.cover) {
+      coverPath = path.join(coverDir, timestamp + ".jpg");
+      await saveCoverToLocal(book.metadata.cover, coverPath);
+    }
+    //把文件信息添加到数据库中
+    ipcRenderer.send("db-insert-book", {
+      title: book.metadata.title,
+      author: book.metadata.author,
+      description: book.metadata.description,
+      cover: coverPath,
+      path: webUtils.getPathForFile(file),
+    });
+    ipcRenderer.once("db-insert-book-response", (event, res) => {
+      bookId = res.bookId;
+      createLeftMenu(book);
+      insertChapter(book, bookId).then(() => {
+        console.log("bookId", bookId);
+        const firstChapter = ipcRenderer.sendSync("db-first-chapter", bookId);
+        console.log("firstChapter", firstChapter);
+        resolve(firstChapter);
+      });
+    });
   });
-  ipcRenderer.once("db-insert-book-response", (event, res) => {
-    createLeftMenu(book);
-    getHtml(book, ext);
-  });
-  // createLeftMenu(book);
-  // getHtml(book, ext);
-  // console.log("book", book);
-  
 };
 
 // 定义一个函数来提取 HTML 字符串中的纯文本
-function getTextFromHTML(htmlString) {
+const getTextFromHTML = (htmlString) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, "text/html");
   return doc.body.textContent || "";
-}
+};
 
-const getHtml = async (book, ext) => {
-  book.sections;
-
+const insertChapter = async (book, bookId) => {
   try {
-    // toc 中 href 与 section.id 匹配，获取 section 的 html 添加
     const sectionInfoArray = await Promise.all(
       book.sections.map(async (section) => {
         const doc = await section.createDocument();
         return [section.id, getTextFromHTML(doc.documentElement.outerHTML)];
       })
     );
-
     console.log("sectionInfoArray", sectionInfoArray);
-
-    // 将 sectionInfoArray 转换为对象，方便通过 href 查找
     const sectionInfoMap = Object.fromEntries(sectionInfoArray);
 
-    // 循环 toc 生成新数组
-    let newToc = [];
-    for (const tocItem of book.toc) {
-      let newTocItem = { ...tocItem }; // 复制 tocItem 的属性
-      if (sectionInfoMap[tocItem.href]) {
-        newTocItem.html = sectionInfoMap[tocItem.href];
-        newToc.push(newTocItem); // 添加 html 属性
-      }
-      if (tocItem.subitems) {
-        for (const subitem of tocItem.subitems) {
-          let newTocItem = { ...subitem }; // 复制 subitem 的属性
-          if (sectionInfoMap[subitem.href]) {
-            newTocItem.html = sectionInfoMap[subitem.href];
-            newToc.push(newTocItem); // 添加 html 属性
-          }
+    const insertTocItem = async (item) => {
+      let newTocItem = { ...item }; // 复制 item 的属性
+      if (sectionInfoMap[item.href]) {
+        newTocItem.html = sectionInfoMap[item.href];
+        try {
+          await new Promise((resolve, reject) => {
+            ipcRenderer.send("db-insert-chapter", {
+              title: newTocItem.label,
+              href: newTocItem.href,
+              content: newTocItem.html,
+              bookId: bookId,
+            });
+            // 监听插入响应
+            ipcRenderer.once("db-insert-chapter-response", (event, res) => {
+              if (res.success) {
+                resolve();
+              } else {
+                reject(new Error(`插入失败: ${res.message}`));
+              }
+            });
+          });
+        } catch (err) {
+          console.error("插入章节数据失败:", err);
         }
       }
+      if (item.subitems) {
+        for (const subitem of item.subitems) {
+          await insertTocItem(subitem);
+        }
+      }
+    };
+    // 串行处理每个 toc 项
+    for (const tocItem of book.toc) {
+      await insertTocItem(tocItem);
     }
-    console.log("循环结束，newToc 数组内容：", newToc);
-    // 你可以在这里调用其他函数，将 newToc 作为参数传递
-    // processNewToc(newToc);
-
-    // // 先处理 epub
-    // const timestamp = Date.now();
-    // for (const tocItem of book.toc) {
-    //   const contentPromise = getContent(tocItem.href, book.sections);
-    //   console.log(tocItem.label, tocItem.href, contentPromise);
-    //   if (tocItem.subitems) {
-    //     for (const subitem of tocItem.subitems) {
-    //       const subContentPromise = getContent(subitem.href, book.sections);
-    //       console.log(subitem.label, subitem.href, subContentPromise);
-    //     }
-    //   }
-    // }
-    // sections toc
-    // await section.createDocument().then(async (document) => {
-    //     // // 将 document 对象转换为 HTML 字符串
-    //     // const htmlContent = document.documentElement.outerHTML;
-    //     // // 判断 section.id 是否有后缀，若没有则添加 .html
-    //     // const fileName = ext == 'epub' ? section.id : `${section.id}.html`;
-    //     // ipcRenderer.send('save-html', {
-    //     //     timestamp,
-    //     //     fileName: fileName,
-    //     //     content: htmlContent
-    //     // });
-    // });
   } catch (err) {
     console.error("处理文件时出错:", err);
   }
