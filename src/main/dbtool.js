@@ -162,10 +162,27 @@ const getFirstChapter = (bookId, event) => {
     }
   );
 };
+ 
+const getChapter = (bookId, href, event) => {
+  db.get(
+    `SELECT * FROM ee_chapter WHERE bookId =? AND href =?  ORDER BY id ASC LIMIT 1`,
+    [bookId, href] ,  (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        event.returnValue = { success: false };
+      } else {
+        event.returnValue = { success: true, data: rows };
+      }
+    }
+  ) 
+}
+
+
 //导出
 module.exports = {
   initDatabase,
   insertBook,
   insertChapter,
   getFirstChapter,
+  getChapter
 };

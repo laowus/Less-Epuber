@@ -156,6 +156,7 @@ const createLeftMenu = (book) => {
   if (toc) {
     const tocView = createTOCView(toc, (href) => {
       console.log("href", href);
+      const chapter = ipcRenderer.sendSync("db-get-chapter", href);
     });
     const tocViewElement = $("#toc-view");
     tocViewElement.innerHTML = "";
