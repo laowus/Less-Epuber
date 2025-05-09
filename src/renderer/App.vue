@@ -2,9 +2,16 @@
 import { ref, provide, watch } from "vue";
 import Header from "./components/header.vue";
 import TxtEditor from "./components/txtEditor.vue";
+import EventBus from "../common/EventBus";
 
 const chapters = ref([]);
-const curChapter = ref({ index: 0, title: "", content: "" });
+const curChapter = ref({
+  id: 0,
+  bookId: 0,
+  href: "",
+  title: "",
+  content: "",
+});
 
 // 引用 TxtEditor 组件
 const txtEditorRef = ref(null);
@@ -26,6 +33,11 @@ provide("metadata", metadata);
 const handleChapterClick = (chapter) => {
   curChapter.value = chapter;
 };
+
+EventBus.on("updateCurChapter", (newChapter) => {
+  console.log("updateCurChapter", newChapter);
+  curChapter.value = newChapter;
+});
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 <script setup>
-import { ref, inject, watch, onMounted } from "vue";
-
+import { ref, inject, watch, onMounted, toRaw } from "vue";
+const { ipcRenderer } = window.require("electron");
 const curChapter = inject("curChapter");
 
 const barValue = ref("1");
@@ -34,15 +34,23 @@ const scrollRightWrapperToTop = () => {
 watch(
   curChapter,
   (val) => {
-    console.log("curChapter", val);
+    console.log("watch txtEditor curChapter", val);
     queueMicrotask(() => {
-      if (editArea.value) {
-        const textarea = editArea.value;
-        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight);
-        const scrollHeight = textarea.scrollHeight;
-        const rows = Math.ceil(scrollHeight / lineHeight);
-        line(rows);
-        scrollRightWrapperToTop();
+      const textarea = editArea.value;
+      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight);
+      const scrollHeight = textarea.scrollHeight;
+      const rows = Math.ceil(scrollHeight / lineHeight);
+      line(rows);
+      scrollRightWrapperToTop();
+      console.log("watch curChapter", val);
+      if (val && Object.keys(val).length > 0) {
+        try {
+          ipcRenderer.sendSync("db-update-chapter", toRaw(val));
+        } catch (error) {
+          console.error("发送 db-update-chapter 消息时出错:", error);
+        }
+      } else {
+        console.log("val 无效，不发送消息");
       }
     });
   },

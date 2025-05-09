@@ -4,7 +4,9 @@ const path = window.require("path");
 const fs = window.require("fs");
 const { ipcRenderer, webUtils } = window.require("electron");
 const $ = document.querySelector.bind(document);
+import EventBus from "../../common/EventBus";
 
+let bookId = 0;
 const locales = "en";
 const listFormat = new Intl.ListFormat(locales, {
   style: "short",
@@ -54,7 +56,6 @@ export const open = async (file) => {
     const timestamp = Date.now();
     const ext = file.name.match(/\.([^.]+)$/)?.[1] || "";
     const book = await makeBook(file);
-    let bookId = 0;
     console.log("book", book);
     const coverDir = ipcRenderer.sendSync("get-cover-dir", "ping");
     let coverPath = "";
@@ -141,8 +142,6 @@ const insertChapter = async (book, bookId) => {
   }
 };
 
-//判断section.id 是否有后缀，如果没有加.html
-
 //创建目录
 const createLeftMenu = (book) => {
   const toc = book.toc;
@@ -156,7 +155,8 @@ const createLeftMenu = (book) => {
   if (toc) {
     const tocView = createTOCView(toc, (href) => {
       console.log("href", href);
-      const chapter = ipcRenderer.sendSync("db-get-chapter", href);
+      const chapter = ipcRenderer.sendSync("db-get-chapter", bookId, href);
+      EventBus.emit("updateCurChapter", chapter.data);
     });
     const tocViewElement = $("#toc-view");
     tocViewElement.innerHTML = "";

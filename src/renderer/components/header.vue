@@ -49,11 +49,7 @@ const parseEpub = async (file) => {
   }
   if (res) {
     console.log("res", res);
-    Object.assign(curChapter.value, {
-      index: 111,
-      title: res.data.title || "",
-      content: res.data.content || "",
-    });
+    curChapter.value = res.data;
     console.log("赋值后的 curChapter:", curChapter.value);
   }
 };

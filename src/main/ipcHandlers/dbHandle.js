@@ -1,5 +1,11 @@
 const { ipcMain } = require("electron");
-const { insertBook, insertChapter, getFirstChapter, getChapter } = require("../dbtool.js");
+const {
+  insertBook,
+  insertChapter,
+  getFirstChapter,
+  getChapter,
+  updateChapter,
+} = require("../dbtool.js");
 
 const dbHandle = () => {
   ipcMain.on("db-insert-book", (event, book) => {
@@ -11,9 +17,14 @@ const dbHandle = () => {
   ipcMain.on("db-first-chapter", (event, bookId) => {
     getFirstChapter(bookId, event);
   });
-  ipcMain.on("db-insert-chapter-response", (event,bookId,href) => {
-    getChapter("db-insert-chapter-response", res); 
-  })
+  ipcMain.on("db-get-chapter", (event, bookId, href) => {
+    getChapter(bookId, href, event);
+  });
+
+  ipcMain.on("db-update-chapter", (event, chapter) => {
+    console.log("db-update-chapter", chapter);
+    updateChapter(chapter.bookId, chapter.href, chapter.content, event);
+  });
 };
 
 module.exports = dbHandle;

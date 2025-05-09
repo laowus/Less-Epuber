@@ -162,11 +162,12 @@ const getFirstChapter = (bookId, event) => {
     }
   );
 };
- 
+
 const getChapter = (bookId, href, event) => {
   db.get(
-    `SELECT * FROM ee_chapter WHERE bookId =? AND href =?  ORDER BY id ASC LIMIT 1`,
-    [bookId, href] ,  (err, rows) => {
+    `SELECT * FROM ee_chapter WHERE bookId =? AND href =? `,
+    [bookId, href],
+    (err, rows) => {
       if (err) {
         console.error(err.message);
         event.returnValue = { success: false };
@@ -174,9 +175,23 @@ const getChapter = (bookId, href, event) => {
         event.returnValue = { success: true, data: rows };
       }
     }
-  ) 
-}
+  );
+};
 
+const updateChapter = (bookId, href, content, event) => {
+  db.run(
+    `UPDATE ee_chapter SET content = ?, updateTime = datetime('now') WHERE bookId = ? AND href = ?`,
+    [content, bookId, href],
+    (err) => {
+      if (err) {
+        event.returnValue = { success: false };
+      } else {
+        console.log("Rows affected:", this.changes);
+        event.returnValue = { success: true, data: this.lastID };
+      }
+    }
+  );
+};
 
 //导出
 module.exports = {
@@ -184,5 +199,6 @@ module.exports = {
   insertBook,
   insertChapter,
   getFirstChapter,
-  getChapter
+  getChapter,
+  updateChapter,
 };
